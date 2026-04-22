@@ -1,0 +1,177 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GitLab Community Edition with Terraform (TF State stored on S3 Backend)'
+
+Parameters:
+  AdminIP:
+    Type: String
+    Description: "Your Public IP (e.g., 1.2.3.4/32)."
+    AllowedPattern: '(\d{1,3}\.){3}\d{1,3}/\d{1,2}'
+  
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64'
+
+Resources:
+  # 1. S3 bucket for Terraform state
+  TerraformStateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "tf-state-${AWS::AccountId}-${AWS::Region}-lab"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # 2. Create a /24 CIDR block for our VPC
+  LabVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: Unified-Lab-VPC }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref LabVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref LabVPC
+      CidrBlock: 10.0.0.0/26
+      MapPublicIpOnLaunch: true
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref LabVPC
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # 3. IAM Configuration - This will have AdministratorAccess
+  DevOpsInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: [ec2.amazonaws.com] }
+            Action: ['sts:AssumeRole']
+      ManagedPolicyArns: 
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+
+  DevOpsInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref DevOpsInstanceRole]
+
+  # 4. Security Group
+  UnifiedDevOpsSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Ingress for GitLab and SSH
+      VpcId: !Ref LabVPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: !Ref AdminIP }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: !Ref AdminIP }
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref AdminIP }
+        - { IpProtocol: tcp, FromPort: 2222, ToPort: 2222, CidrIp: !Ref AdminIP }
+      SecurityGroupEgress: [{ IpProtocol: -1, CidrIp: 0.0.0.0/0 }]
+
+  # 5. EC2 Instance
+  DevOpsHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.large
+      ImageId: !Ref LatestAmiId
+      SubnetId: !Ref PublicSubnet
+      IamInstanceProfile: !Ref DevOpsInstanceProfile
+      SecurityGroupIds: [!Ref UnifiedDevOpsSG]
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+      Tags: [{ Key: Name, Value: Unified-DevOps-Controller }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          dnf update -y
+          dnf install -y docker curl git jq
+          systemctl enable --now docker
+
+          # Setup Swap (4GB)
+          dd if=/dev/zero of=/swapfile bs=128M count=32
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
+          # Create a user for Terraform
+          adduser terraform_user
+          usermod -aG wheel terraform_user
+          usermod -aG docker terraform_user
+          echo "terraform_user ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/terraform_user
+          
+          useradd -m -s /bin/bash kubeuser
+          usermod -aG docker kubeuser
+          mkdir -p /home/kubeuser/.kube
+          chown -R kubeuser:kubeuser /home/kubeuser/.kube
+
+          # Terraform installation
+          dnf install -y dnf-plugins-core
+          dnf config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+          dnf -y install terraform
+          
+          #kubectl installation for CLI
+          curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          mv ./kubectl /usr/local/bin/kubectl
+
+          # GitLab Community Edition Installation. The EXTERNAL_URL is pre-populated but can be customized.
+          curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | bash
+          EXTERNAL_URL="http://gitlab.devlabs.com" dnf install -y gitlab-ce
+  # EIP
+  DevOpsEIP:
+    Type: AWS::EC2::EIP
+    Properties: { Domain: vpc }
+
+  DevOpsEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt DevOpsEIP.AllocationId
+      InstanceId: !Ref DevOpsHost
+
+Outputs:
+  DevOpsPublicIP:
+    Description: "Public IP of the EC2 Instance"
+    Value: !Ref DevOpsEIP
+  TFStateBucket:
+    Description: "S3 Bucket Name for Terraform State"
+    Value: !Ref TerraformStateBucket
+  DevOpsRoleArn:
+    Description: "IAM Role ARN of the EC2 Instance"
+    Value: !GetAtt DevOpsInstanceRole.Arn
