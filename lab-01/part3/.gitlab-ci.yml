@@ -1,0 +1,34 @@
+# Updated .gitlab-ci.yml for part 3
+stages:
+  - validate
+  - plan
+  - apply
+
+variables:
+  TF_IN_AUTOMATION: "true"
+
+before_script:
+  - terraform init
+
+validate:
+  stage: validate
+  script:
+    - terraform validate
+  tags:
+    - terraform
+
+plan:
+  stage: plan
+  script:
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - tfplan
+    expire_in: 1 hour
+
+apply:
+  stage: apply
+  script:
+    - terraform apply -auto-approve tfplan
+  tags:
+    - terraform

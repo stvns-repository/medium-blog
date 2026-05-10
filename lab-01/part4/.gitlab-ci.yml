@@ -1,0 +1,56 @@
+# Updated .gitlab-ci.yml for part 4
+
+stages:
+  - test
+  - deploy-infra  # Stage 1: Create ECR & EKS
+  - build         # Stage 2: Build & Push Docker image
+  - deploy-app    # Stage 3: Deploy K8s manifests (Postgres/Flask)
+
+variables:
+  AWS_DEFAULT_REGION: us-west-2
+  # Replace <AWS_ACCOUNT_ID> with your AWS Account ID where the ECR resides
+  ECR_REGISTRY: <AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com
+  APP_NAME: eks-app-backend
+  TF_IN_AUTOMATION: "true"
+
+# --- STAGE: TEST ---
+run-terraform-test:
+  stage: test
+  script:
+    - terraform version
+    - terraform init -backend=false
+    - terraform validate
+  tags:
+    - terraform
+
+# --- STAGE: DEPLOY-INFRA ---
+# This ensures the ECR repository exists BEFORE the build stage starts
+provision-infrastructure:
+  stage: deploy-infra
+  script:
+    - terraform init
+    # We pass a dummy image var because TF needs a value to pass validation
+    - terraform apply -auto-approve -var="app_image=placeholder"
+  tags:
+    - terraform
+
+# --- STAGE: BUILD ---
+build-and-push-app:
+  stage: build
+  script:
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+    - docker build -t $APP_NAME ./app
+    - docker tag $APP_NAME:latest $ECR_REGISTRY/$APP_NAME:latest
+    - docker push $ECR_REGISTRY/$APP_NAME:latest
+  tags:
+    - terraform
+
+# --- STAGE: DEPLOY-APP ---
+# This stage refreshes the EKS deployment with the real image pushed in the previous stage
+refresh-k8s-deployment:
+  stage: deploy-app
+  script:
+    - terraform init
+    - terraform apply -auto-approve -var="app_image=$ECR_REGISTRY/$APP_NAME:latest"
+  tags:
+    - terraform
