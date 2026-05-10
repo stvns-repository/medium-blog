@@ -1,0 +1,12 @@
+stages:
+  - connect
+
+verify-handshake:
+  stage: connect
+  tags:
+    - minikube  # We'll use one of the tags we've configured on our gitlab runner
+  script:
+    - echo "Checking environment for terraform_user..."
+    - terraform --version
+    - aws sts get-caller-identity
+    - terraform init

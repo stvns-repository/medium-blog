@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Part 4 of the GitOps Lab - Full Stack GitOps</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; padding: 50px; margin: 0; }
+        .main-layout { display: flex; gap: 30px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
+        .gallery { flex: 3; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .product-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        img { border-radius: 10px; width: 100%; height: 200px; object-fit: cover; margin-bottom: 15px; }
+        h3 { margin: 10px 0; color: #333; }
+        button { background: #ff9900; border: none; padding: 10px 20px; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:hover { background: #e68a00; }
+        #cart-sidebar { flex: 1; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; position: sticky; top: 20px; min-height: 300px; }
+        .cart-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        .cart-status { margin-top: 10px; color: #2ecc71; font-weight: bold; font-size: 0.8em; min-height: 1.2em; }
+        #checkout-btn { background: #2ecc71; width: 100%; margin-top: 20px; font-size: 1.1em; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; }
+        #checkout-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>Adopt a Cloud Kitten</h1>
+    <div class="main-layout">
+        <div class="gallery">
+            <!-- Kitten 1 -->
+            <div class="product-card">
+                <img src="https://placekittens.com/300/200" alt="Kitten 1">
+                <h3>Docker Dave</h3>
+                <button onclick="addToCart(1, 'Docker Dave', this)">Add to Cart</button>
+                <p class="cart-status"></p>
+            </div>
+            <!-- Kitten 2 -->
+            <div class="product-card">
+                <img src="https://placekittens.com/300/201" alt="Kitten 2">
+                <h3>Kubernetes Kitty</h3>
+                <button onclick="addToCart(2, 'Kubernetes Kitty', this)">Add to Cart</button>
+                <p class="cart-status"></p>
+            </div>
+            <!-- Kitten 3 -->
+            <div class="product-card">
+                <img src="https://placekittens.com/300/203" alt="Kitten 3">
+                <h3>Terraform Tom</h3>
+                <button onclick="addToCart(3, 'Terraform Tom', this)">Add to Cart</button>
+                <p class="cart-status"></p>
+            </div>
+            <!-- Kitten 4 -->
+            <div class="product-card">
+                <img src="https://placekittens.com/300/204" alt="Kitten 4">
+                <h3>GitOps Ginger</h3>
+                <button onclick="addToCart(4, 'GitOps Ginger', this)">Add to Cart</button>
+                <p class="cart-status"></p>
+            </div>
+            <!-- Kitten 5 -->
+            <div class="product-card">
+                <img src="https://placekittens.com/300/205" alt="Kitten 5">
+                <h3>Cloudy Calico</h3>
+                <button onclick="addToCart(5, 'Cloudy Calico', this)">Add to Cart</button>
+                <p class="cart-status"></p>
+            </div>
+            <!-- Kitten 6 -->
+            <div class="product-card">
+                <img src="https://placekittens.com/300/206" alt="Kitten 6">
+                <h3>Sudo Snowball</h3>
+                <button onclick="addToCart(6, 'Sudo Snowball', this)">Add to Cart</button>
+                <p class="cart-status"></p>
+            </div>
+        </div>
+
+        <div id="cart-sidebar">
+            <h3>Your Litter Box (Cart)</h3>
+            <div id="cart-items-list"><p style="color:#999;">Empty...</p></div>
+            <hr>
+            <p style="font-weight:bold;">Total: <span id="cart-count">0</span> Kittens</p>
+            <button id="checkout-btn" onclick="goToPayment()" disabled>Proceed to Payment</button>
+        </div>
+    </div>
+
+    <script>
+        let cartState = [];
+
+        async function addToCart(kittenId, name, button) {
+            const statusLabel = button.nextElementSibling;
+            statusLabel.innerText = "Syncing...";
+            
+            // UI Update
+            cartState.push({ id: kittenId, name: name });
+            updateSidebar();
+
+            try {
+                // This calls back to your port-forwarded backend via the frontend tunnel
+                const response = await fetch('/api/cart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: kittenId, name: name })
+                });
+
+                if (response.ok) {
+                    statusLabel.innerText = "Synced with Backend! 🐾";
+                } else {
+                    statusLabel.innerText = "Backend Error";
+                }
+            } catch (err) {
+                statusLabel.innerText = "Added (Local Only)";
+                console.log("Backend offline:", err);
+            }
+        }
+
+        function updateSidebar() {
+            const list = document.getElementById('cart-items-list');
+            const count = document.getElementById('cart-count');
+            const btn = document.getElementById('checkout-btn');
+
+            if (cartState.length > 0) {
+                list.innerHTML = cartState.map(item => `
+                    <div class="cart-item">
+                        <span>${item.name}</span>
+                        <span>#${item.id}</span>
+                    </div>
+                `).join('');
+                btn.disabled = false;
+            }
+            count.innerText = cartState.length;
+        }
+
+        function goToPayment() { 
+            alert("Part 5 Preview: Ready to pay for " + cartState.length + " kittens!"); 
+        }
+    </script>
+</body>
+</html>
