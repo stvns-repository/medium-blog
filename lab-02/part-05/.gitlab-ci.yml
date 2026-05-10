@@ -1,0 +1,58 @@
+stages:
+  - plan
+  - apply
+  - build
+
+variables:
+   # Make sure to use your correct ECR URI (replace the AWS Account ID)
+  FRONTEND_ECR_REPO: "<AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/gitops-repo/frontend"
+  CART_ECR_REPO: "<AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/gitops-repo/cart-service"
+  AWS_REGION: "us-west-2"
+
+terraform-plan:
+  stage: plan
+  tags:
+    - minikube
+  script:
+    - terraform init
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - tfplan
+    expire_in: 1 hour
+
+terraform-apply:
+  stage: apply
+  tags:
+    - minikube
+  script:
+    - terraform init
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - terraform-plan
+
+build-frontend:
+  stage: build
+  tags:
+    - minikube
+  script:
+    - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${FRONTEND_ECR_REPO}
+    - echo "Building Frontend..."
+    - docker build -t ${FRONTEND_ECR_REPO}:latest -t ${FRONTEND_ECR_REPO}:${CI_COMMIT_SHORT_SHA} ./frontend
+    - docker push ${FRONTEND_ECR_REPO}:latest
+    - docker push ${FRONTEND_ECR_REPO}:${CI_COMMIT_SHORT_SHA}
+  dependencies:
+    - terraform-apply
+
+build-cart:
+  stage: build
+  tags:
+    - minikube
+  script:
+    - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${CART_ECR_REPO}
+    - echo "Building Cart/Payment Service Image..."
+    - docker build -t ${CART_ECR_REPO}:latest -t ${CART_ECR_REPO}:${CI_COMMIT_SHORT_SHA} ./backend
+    - docker push ${CART_ECR_REPO}:latest
+    - docker push ${CART_ECR_REPO}:${CI_COMMIT_SHORT_SHA}
+  dependencies:
+    - terraform-apply
