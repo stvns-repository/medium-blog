@@ -132,8 +132,8 @@ Resources:
           systemctl enable docker
 
           # Create Users & Pre-configure Docker Groups
-          useradd kube_user
-          useradd terraform_user
+          useradd -m kube_user
+          useradd -m terraform_user
           useradd -m -s /bin/bash gitlab-runner
           usermod -aG docker kube_user
           usermod -aG docker terraform_user
