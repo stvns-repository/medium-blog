@@ -1,6 +1,7 @@
 # Medium Blog : EKS & CI/CD Pipeline
-> GitLab Runners + Terraform : Repository of my Medium Blog
-> This branch (`/labs`) contains the step-by-step evolution of the infrastructure which is documented in my Medium series.
+> GitLab Runners + Terraform : Repository of my Medium Blog.
+
+> This contains the step-by-step evolution of the infrastructure which is documented in my Medium series.
 
 ## 📖 Guided Walkthrough
 This project is part of a 5-part series:
