@@ -1,0 +1,9 @@
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Ignore Node.js dependencies
+**/node_modules/
+*.log
+
