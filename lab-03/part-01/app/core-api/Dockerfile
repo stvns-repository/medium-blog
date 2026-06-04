@@ -12,6 +12,3 @@ COPY --from=builder /app/server.js ./
 EXPOSE 8080
 CMD ["node", "server.js"]
 
-5. Initialize terraform
-# cd terraform
-# terraform init
