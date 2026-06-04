@@ -11,7 +11,7 @@ terraform {
     # Keep these keys blank! We will inject them dynamically on the host.
     bucket         = ""
     key            = "lab-03/terraform.tfstate"
-    region         = "us-west2-2" 
+    region         = "us-west-2" 
     encrypt        = true
   }
 }
