@@ -8,15 +8,14 @@ terraform {
   }
 
   backend "s3" {
-    # Replace with the exact bucket name outputted by your CF template
-    bucket         = "784079396645-lab03-us-west-2" 
+    # Keep these keys blank! We will inject them dynamically on the host.
+    bucket         = ""
     key            = "lab-03/terraform.tfstate"
-    region         = "us-west-2" # Update to match your region
+    region         = "us-west2-2" 
     encrypt        = true
   }
 }
 
 provider "aws" {
-  region = "us-west-2" # Update to match your region
+  region = "us-west-2"
 }
-
