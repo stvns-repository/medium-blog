@@ -1,1 +1,10 @@
-../../lab-03/part-03/.github/workflows/deploy.yml
+name: Root Trigger Pipeline
+
+on:
+  push:
+    branches: [ "lab03" ]
+
+jobs:
+  trigger-part-03:
+    uses: ./.github/workflows/../../lab-03/part-03/.github/workflows/deploy.yml
+    secrets: inherit

@@ -3,6 +3,7 @@ name: Part 3 - Build and Push to ECR
 on:
   push:
     branches: [ "lab03" ]
+  workflow_call:
 
 jobs:
   build-and-push:
