@@ -29,6 +29,6 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Pointing straight to the application directory
-          cd lab-03/part-02/app/core-api
+          cd lab-03/part-03/app/core-api
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
