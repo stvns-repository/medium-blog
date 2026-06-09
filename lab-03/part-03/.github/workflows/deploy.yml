@@ -1,9 +1,8 @@
-name: Part 3 - Build and Push to ECR
+name: Build and Push to ECR (Part 3)
 
 on:
   push:
     branches: [ "lab03" ]
-  workflow_call:
 
 jobs:
   build-and-push:
@@ -29,7 +28,7 @@ jobs:
           ECR_REPOSITORY: feature-flag-api
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Navigate into your app folder relative to root
-          cd part-02/app/core-api
+          # Pointing straight to the application directory
+          cd lab-03/part-02/app/core-api
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG	
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
