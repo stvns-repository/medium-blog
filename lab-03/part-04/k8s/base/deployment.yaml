@@ -24,4 +24,4 @@ spec:
         - name: APP_ENV
           value: "production"
         - name: ENABLE_PREMIUM_CHECKOUT
-          value: "false" # Kill the feature by switching to false as part of our test
+          value: "true"
