@@ -17,7 +17,7 @@ spec:
         - name: ecr-registry-secret  # Gives K8s the password so we can pull from ECR
       containers:
       - name: core-api
-        image: 784079396645.dkr.ecr.us-west-2.amazonaws.com/feature-flag-api:latest
+        image: 784079396645.dkr.ecr.us-west-2.amazonaws.com/TEST-BREAK-feature-flag-api:latest
         ports:
         - containerPort: 8080
         env:
