@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Flag Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
+
+    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide text-indigo-400">🌐 CoreApp Operations Portal</h1>
+            <span class="bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/20 font-medium">
+                Cluster Active
+            </span>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-6 w-full flex-grow flex flex-col justify-center items-center">
+        
+        <div class="w-full max-w-2xl bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl mb-8">
+            <h2 class="text-lg font-semibold mb-4 text-slate-300">Live Engine Values</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Environment</p>
+                    <p id="env-badge" class="text-lg font-bold text-slate-200 mt-1">Loading...</p>
+                </div>
+                <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Premium Checkout Status</p>
+                    <p id="status-badge" class="text-lg font-bold mt-1">Checking...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full max-w-2xl text-center">
+            <h3 class="text-sm font-semibold tracking-wider uppercase text-slate-400 mb-4">Evaluated Frontend Experience</h3>
+            
+            <div id="experience-card" class="bg-slate-800 rounded-2xl border p-8 shadow-2xl transition-all duration-500">
+                <p class="text-slate-400 animate-pulse">Evaluating runtime flags...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-950 text-center py-4 text-xs text-slate-500 border-t border-slate-900">
+        GitOps Lab-03 Pipeline Demonstration • Powered by Minikube & ArgoCD
+    </footer>
+
+    <script>
+        async function evaluateFlags() {
+            try {
+                const response = await fetch('/api/v1/flags');
+                const data = await response.json();
+                
+                const isPremium = data.v2_premium_checkout;
+                const environment = data.environment || "production";
+
+                // Update Overview Badges
+                document.getElementById('env-badge').innerText = environment.toUpperCase();
+                
+                const statusBadge = document.getElementById('status-badge');
+                const expCard = document.getElementById('experience-card');
+
+                if (isPremium) {
+                    statusBadge.innerText = "ENABLED (v2)";
+                    statusBadge.className = "text-lg font-bold mt-1 text-amber-400";
+                    
+                    // Render Gold/Dark Premium UI Card
+                    expCard.className = "bg-gradient-to-br from-slate-800 to-amber-950/40 rounded-2xl border border-amber-500/30 p-8 shadow-2xl transform scale-105 transition-all duration-500";
+                    expCard.innerHTML = `
+                        <div class="inline-block bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-4 shadow-sm">
+                            ✨ Premium Feature
+                        </div>
+                        <h4 class="text-3xl font-black tracking-tight text-white mb-2">Next-Gen Express Checkout</h4>
+                        <p class="text-slate-300 text-sm max-w-md mx-auto mb-6">
+                            Enjoy lightning-fast, single-click payment sorting, automated vaulting, and native multi-currency validation routing.
+                        </p>
+                        <button class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3 rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-95">
+                            Complete Premium Checkout
+                        </button>
+                    `;
+                } else {
+                    statusBadge.innerText = "DISABLED (v1)";
+                    statusBadge.className = "text-lg font-bold mt-1 text-indigo-400";
+                    
+                    // Render Standard UI Card
+                    expCard.className = "bg-slate-800 rounded-2xl border border-slate-700 p-8 shadow-2xl transition-all duration-500";
+                    expCard.innerHTML = `
+                        <div class="inline-block bg-slate-700 text-slate-300 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-4">
+                            Standard Tier
+                        </div>
+                        <h4 class="text-2xl font-bold tracking-tight text-slate-100 mb-2">Classic Checkout</h4>
+                        <p class="text-slate-400 text-sm max-w-md mx-auto mb-6">
+                            Please proceed to standard processing. Billing statements will settle through traditional multi-day clearing pathways.
+                        </p>
+                        <button class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-lg shadow-md transition-all active:scale-95">
+                            Continue to Billing
+                        </button>
+                    `;
+                }
+
+            } catch (err) {
+                console.error("Error connecting to feature flag backend context:", err);
+                document.getElementById('status-badge').innerText = "ERROR";
+                document.getElementById('experience-card').innerHTML = `
+                    <p class="text-rose-400 font-medium">Failed to establish handshake connection to the core flag service.</p>
+                `;
+            }
+        }
+
+        // Run evaluation loop instantly on load
+        evaluateFlags();
+    </script>
+</body>
+</html>

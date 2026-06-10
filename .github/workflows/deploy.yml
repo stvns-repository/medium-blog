@@ -28,8 +28,8 @@ jobs:
           ECR_REPOSITORY: feature-flag-api
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Pointing straight to the application directory
-          cd lab-03/part-03/app/core-api
+          # Update: point to part-04 
+          cd lab-03/part-04/app/core-api
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
 
           # Add a duplicate local tag named 'latest'
