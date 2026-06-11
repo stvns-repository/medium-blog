@@ -28,6 +28,9 @@ jobs:
           ECR_REPOSITORY: feature-flag-api
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          # For part-03, comment out the lab-03/part-03 below and comment (put a #) on the lab-03/part-04 line.
+          # cd lab-03/part-03/app/core-api
+
           # Update: point to part-04 
           cd lab-03/part-04/app/core-api
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
