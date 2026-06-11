@@ -1,4 +1,12 @@
-name: Build and Push to ECR (Part 3)
+# ==============================================================================
+# GITOPS AUTOMATION PIPELINE (for part-03  & part-04)
+# ==============================================================================
+# NOTE: This workflow handles the automated container builds for Part 3 and Part 4.
+# GitHub Actions requires this file to reside at the absolute root of the repository
+# (/.github/workflows/) to execute. Procedures will be provided on the medium blog.
+# ==============================================================================
+
+name: Build and Push to ECR (Part 3 & 4)
 
 on:
   push:
