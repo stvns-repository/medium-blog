@@ -1,3 +1,4 @@
+# Ignore local TF directory, TF state and lock file
 **/.terraform/
 *.tfstate
 *.tfstate.*
