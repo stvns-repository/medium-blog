@@ -106,12 +106,21 @@ Resources:
                 Action:
                   - 'kms:CreateKey'
                   - 'kms:CreateAlias'
+                  - 'kms:DeleteAlias'
+                  - 'kms:ListAliases'
                   - 'kms:DescribeKey'
                   - 'kms:GetKeyPolicy'
                   - 'kms:PutKeyPolicy'
                   - 'kms:TagResource'
+                  - 'kms:UntagResource'
+                  - 'kms:ListResourceTags'
                   - 'kms:EnableKeyRotation'
+                  - 'kms:GetKeyRotationStatus'
                   - 'kms:ScheduleKeyDeletion'
+                  - 'kms:GenerateDataKey'
+                  - 'kms:Encrypt'
+                  - 'kms:Decrypt'
+                  - 'kms:CreateGrant'
                 Resource: '*'
 
         # Secrets Manager - Provisioning Access
@@ -126,8 +135,9 @@ Resources:
                   - 'secretsmanager:GetSecretValue'
                   - 'secretsmanager:PutSecretValue'
                   - 'secretsmanager:TagResource'
+                  - 'secretsmanager:GetResourcePolicy'
                   - 'secretsmanager:DeleteSecret'
-                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:lab04/*'
+                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:lab04/app/credentials*'
 
         # IAM Policy/Role Provisioning
         - PolicyName: Lab04IAMProvisioningAccess
@@ -144,6 +154,19 @@ Resources:
                   - 'iam:DeleteRolePolicy'
                   - 'iam:PassRole'
                 Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/lab04-*'
+              - Effect: Allow
+                Action:
+                  - 'iam:CreatePolicy'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'iam:GetPolicy'
+                  - 'iam:DeletePolicy'
+                  - 'iam:ListPolicyVersions'
+                  - 'iam:GetPolicyVersion'
+                  - 'iam:CreatePolicyVersion'
+                  - 'iam:DeletePolicyVersion'
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:policy/Lab04*'
 
   DevOpsInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -182,7 +205,6 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           dnf update -y
-          # separating the docker installation
           dnf install -y docker
           dnf install -y curl git jq
           systemctl enable --now docker
