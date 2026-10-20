@@ -1,8 +1,14 @@
+# Random Secure Password Generator for Lab Secrets
+resource "random_password" "app_password" {
+  length           = 24
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 # AWS KMS Key for Secrets Encryption
 resource "aws_kms_key" "lab04_key" {
   description             = "KMS key for Lab 04 External Secrets Operator"
   deletion_window_in_days = 7
-  enable_key_rotation     = false
 
   tags = {
     Environment = "lab-04"
@@ -24,10 +30,17 @@ resource "aws_secretsmanager_secret" "app_secrets" {
 
 resource "aws_secretsmanager_secret_version" "app_secrets_val" {
   secret_id = aws_secretsmanager_secret.app_secrets.id
+  
   secret_string = jsonencode({
     API_USERNAME = "admin-user"
-    API_PASSWORD = "SuperSecretLab04Password!@#"
+    API_PASSWORD = random_password.app_password.result
   })
+
+  lifecycle {
+    ignore_changes = [
+      secret_string,
+    ]
+  }
 }
 
 # Least-Privilege IAM Policy for External Secrets Operator

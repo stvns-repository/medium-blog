@@ -107,6 +107,7 @@ Resources:
                   - 'kms:CreateKey'
                   - 'kms:CreateAlias'
                   - 'kms:DeleteAlias'
+                  - 'kms:DisableKeyRotation'
                   - 'kms:ListAliases'
                   - 'kms:DescribeKey'
                   - 'kms:GetKeyPolicy'
