@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: first-testing-phase
+  namespace: lab-04-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: first-testing-phase
+  template:
+    metadata:
+      labels:
+        app: first-testing-phase
+    spec:
+      containers:
+      - name: app-container
+        image: nginx:alpine
+        env:
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret-k8s
+              key: DATABASE_PASSWORD

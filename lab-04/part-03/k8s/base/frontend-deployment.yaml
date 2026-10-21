@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-nginx
+  namespace: lab-04-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-nginx
+  template:
+    metadata:
+      labels:
+        app: frontend-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+        # I'm hardcoding it but this can be done in a better way. This is just for the sake of doing the labs as straight-forward as poosible
+        env:
+        - name: DB_HOST
+          value: "postgres-service.lab-04-app.svc.cluster.local"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: lab-04-app
+spec:
+  selector:
+    app: frontend-nginx
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
