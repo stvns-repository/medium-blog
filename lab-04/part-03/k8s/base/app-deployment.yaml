@@ -16,9 +16,13 @@ spec:
       containers:
       - name: app-container
         image: nginx:alpine
-        env:
-        - name: DATABASE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secret-k8s
-              key: DATABASE_PASSWORD
+        # Mount the secret
+        volumeMounts:
+        - name: secret-volume
+          mountPath: /etc/secrets
+          readOnly: true
+      # Define the volume
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: app-secret-k8s
