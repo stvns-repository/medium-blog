@@ -21,23 +21,15 @@ spec:
         env:
         - name: POSTGRES_USER
           value: "admin-user"
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secret-k8s
-              key: DATABASE_PASSWORD
         - name: POSTGRES_DB
           value: "appdb"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-service
-  namespace: lab-04-app
-spec:
-  selector:
-    app: backend-db
-  ports:
-  - port: 5432
-    targetPort: 5432
-  type: ClusterIP
+        - name: POSTGRES_PASSWORD_FILE
+          value: "/etc/secrets/DATABASE_PASSWORD"
+        volumeMounts:
+        - name: secret-volume
+          mountPath: /etc/secrets
+          readOnly: true
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: app-secret-k8s
