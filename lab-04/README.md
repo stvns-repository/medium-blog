@@ -10,4 +10,4 @@
 
 - [Part 1: Introduction (Overview and Initial Configuration] | https://medium.com/@minitechstories/lab-04-syncing-aws-secrets-manager-with-kubernetes-eso-a-3-part-series-part-1-8b6676fa6ef0
 - [Part 2: Kubernetes Configuration (Kubernetes ESO deployment via Helm)] | https://medium.com/@minitechstories/lab-04-syncing-aws-secrets-manager-with-kubernetes-eso-a-3-part-series-part-2-4a0ad30833a4
-- [Part 3: Test Phase and Conlusion (Test deployment, Lab summary, and Clean-up )] | <To Update>
+- [Part 3: Test Phase and Conlusion (Test deployment, Lab summary, and Clean-up )] | https://medium.com/@minitechstories/lab-04-syncing-aws-secrets-manager-with-kubernetes-eso-a-3-part-series-part-3-bcb94eb5ed96
